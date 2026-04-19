@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: assistant-dashboard
+    runtime: node
+    buildCommand: cd assistant-dashboard && npm install && npm run build
+    startCommand: cd assistant-dashboard && npm start
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: NODE_ENV
+        value: production
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OLLAMA_URL
+        value: ""
