@@ -5,9 +5,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production && \
-    npm install --save-dev vite @vitejs/plugin-react
+# Install dependencies (use npm install if no lock file)
+RUN npm install
 
 # Copy source
 COPY . .
