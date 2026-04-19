@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "node --watch server/index.js",
     "client:dev": "vite",
-    "build": "echo 'Skipping client build for now'",
+    "build": "echo 'Build skipped - using fallback UI'",
     "preview": "vite preview",
     "start": "node server/index.js"
   },

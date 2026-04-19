@@ -63,13 +63,73 @@ app.get('/api/history', (req, res) => {
   res.json({ history });
 });
 
-// Serve static files from React build
+// Serve static files from React build (if it exists)
 const distPath = path.join(__dirname, '../dist');
-app.use(express.static(distPath));
+try {
+  app.use(express.static(distPath));
+} catch (e) {
+  // dist doesn't exist, that's ok
+}
 
-// SPA fallback
-app.get('*', (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+// Fallback: serve a simple HTML dashboard if dist missing
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Assistant Dashboard</title>
+      <style>
+        body { font-family: sans-serif; padding: 2rem; background: #0f172a; color: #f1f5f9; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { color: #0072ce; }
+        .status { padding: 1rem; background: #1e293b; border-radius: 0.5rem; margin: 1rem 0; }
+        button { background: #0072ce; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
+        button:hover { background: #0056a8; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>⚡ Assistant Dashboard</h1>
+        <div class="status">
+          <p><strong>Status:</strong> Server is running ✅</p>
+          <p><strong>API:</strong> Available at /api</p>
+          <p><strong>Frontend:</strong> React UI coming soon</p>
+        </div>
+        <h2>API Endpoints</h2>
+        <ul>
+          <li><code>GET /api/status</code> - System status</li>
+          <li><code>POST /api/ai/execute</code> - Execute task</li>
+          <li><code>GET /api/tokens/stats</code> - Token usage</li>
+          <li><code>GET /api/history</code> - Task history</li>
+        </ul>
+        <h2>Test API</h2>
+        <button onclick="testAPI()">Test /api/status</button>
+        <pre id="result"></pre>
+      </div>
+      <script>
+        function testAPI() {
+          fetch('/api/status')
+            .then(r => r.json())
+            .then(data => {
+              document.getElementById('result').innerText = JSON.stringify(data, null, 2);
+            })
+            .catch(err => {
+              document.getElementById('result').innerText = 'Error: ' + err.message;
+            });
+        }
+      </script>
+    </body>
+    </html>
+  `);
+});
+
+// SPA fallback for /api/* (don't serve HTML for API calls)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    next();
+  } else {
+    res.redirect('/');
+  }
 });
 
 // Error handling
