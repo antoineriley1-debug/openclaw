@@ -3,15 +3,15 @@ export default function TaskHistory({ history }) {
     return (
       <div className="card">
         <h2>📈 Task History</h2>
-        <div className="placeholder">No tasks completed yet</div>
+        <p className="placeholder">No tasks yet</p>
       </div>
     )
   }
 
   return (
-    <div className="card task-history">
+    <div className="card history">
       <h2>📈 Task History</h2>
-      
+
       <div className="history-table">
         <div className="table-header">
           <div className="col-status">Status</div>
@@ -28,15 +28,16 @@ export default function TaskHistory({ history }) {
               {task.status === 'completed' && '✅'}
               {task.status === 'failed' && '❌'}
               {task.status === 'pending' && '⏳'}
+              {task.status === 'processing' && '🔄'}
             </div>
-            <div className="col-prompt">
-              {task.prompt.substring(0, 60)}...
+            <div className="col-prompt" title={task.prompt}>
+              {task.prompt.substring(0, 50)}...
             </div>
             <div className="col-model">{task.model}</div>
             <div className="col-tokens">{task.tokensUsed || 0}</div>
             <div className="col-cost">${(task.cost || 0).toFixed(4)}</div>
             <div className="col-time">
-              {task.completedAt ? new Date(task.completedAt).toLocaleTimeString() : '-'}
+              {task.createdAt ? new Date(task.createdAt).toLocaleTimeString() : '-'}
             </div>
           </div>
         ))}

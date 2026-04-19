@@ -63,12 +63,11 @@ app.get('/api/history', (req, res) => {
   res.json({ history });
 });
 
-// Serve static files from React build (if it exists)
+// Serve static files from React build
 const distPath = path.join(__dirname, '../dist');
-try {
+const fs = require('fs');
+if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
-} catch (e) {
-  // dist doesn't exist, that's ok
 }
 
 // Fallback: serve a simple HTML dashboard if dist missing

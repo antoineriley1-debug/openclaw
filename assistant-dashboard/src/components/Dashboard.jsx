@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
 import Header from './Header'
+import TaskExecutor from './TaskExecutor'
 import TokenStats from './TokenStats'
-import TaskQueue from './TaskQueue'
 import TaskHistory from './TaskHistory'
-import Settings from './Settings'
 import '../styles/dashboard.css'
 
-export default function Dashboard({ status, theme, setTheme }) {
-  const [activeTab, setActiveTab] = useState('overview')
+export default function Dashboard({ status, theme, setTheme, onRefresh }) {
+  const [activeTab, setActiveTab] = useState('chat')
   const [stats, setStats] = useState(null)
   const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!status) return
@@ -29,7 +29,7 @@ export default function Dashboard({ status, theme, setTheme }) {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch('/api/history?limit=50')
+      const res = await fetch('/api/history?limit=20')
       const data = await res.json()
       setHistory(data.history || [])
     } catch (err) {
@@ -37,43 +37,44 @@ export default function Dashboard({ status, theme, setTheme }) {
     }
   }
 
+  const handleTaskComplete = () => {
+    setTimeout(() => {
+      fetchStats()
+      fetchHistory()
+    }, 1000)
+  }
+
   return (
     <div className="dashboard">
       <Header theme={theme} setTheme={setTheme} status={status} />
       
       <div className="tabs">
-        {['overview', 'tokens', 'history', 'settings'].map(tab => (
+        {[
+          { id: 'chat', label: '💬 Chat with Bot', icon: '💬' },
+          { id: 'tokens', label: '💰 Token Usage', icon: '💰' },
+          { id: 'history', label: '📈 History', icon: '📈' }
+        ].map(tab => (
           <button
-            key={tab}
-            className={`tab ${activeTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab)}
+            key={tab.id}
+            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
           >
-            {tab === 'overview' && '📊 Overview'}
-            {tab === 'tokens' && '💰 Tokens & Cost'}
-            {tab === 'history' && '📈 History'}
-            {tab === 'settings' && '⚙️ Settings'}
+            {tab.label}
           </button>
         ))}
       </div>
 
       <div className="content">
-        {activeTab === 'overview' && (
-          <div className="overview">
-            <TaskQueue status={status} onRefresh={fetchStats} />
-            <TokenStats stats={stats} />
-          </div>
+        {activeTab === 'chat' && (
+          <TaskExecutor onTaskComplete={handleTaskComplete} />
         )}
 
         {activeTab === 'tokens' && (
-          <TokenStats stats={stats} detailed={true} />
+          <TokenStats stats={stats} />
         )}
 
         {activeTab === 'history' && (
           <TaskHistory history={history} />
-        )}
-
-        {activeTab === 'settings' && (
-          <Settings onSave={fetchStats} />
         )}
       </div>
     </div>

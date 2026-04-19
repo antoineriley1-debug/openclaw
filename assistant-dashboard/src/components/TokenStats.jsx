@@ -1,55 +1,57 @@
-import { useEffect, useState } from 'react'
-
-export default function TokenStats({ stats, detailed = false }) {
-  const [costs, setCosts] = useState({})
-
-  useEffect(() => {
-    if (stats) {
-      const totalCost = Object.values(stats).reduce((sum, model) => sum + parseFloat(model.cost || 0), 0)
-      setCosts(totalCost)
-    }
-  }, [stats])
-
+export default function TokenStats({ stats }) {
   if (!stats || Object.keys(stats).length === 0) {
     return (
       <div className="card">
         <h2>💰 Token Usage</h2>
-        <div className="placeholder">No token usage recorded yet</div>
+        <p className="placeholder">No tasks executed yet</p>
       </div>
     )
   }
 
+  const totalCost = Object.values(stats).reduce((sum, m) => sum + parseFloat(m.cost || 0), 0)
+  const totalTokens = Object.values(stats).reduce((sum, m) => sum + (m.tokens || 0), 0)
+
   return (
     <div className="card token-stats">
       <h2>💰 Token Usage & Cost</h2>
-      
-      {!detailed && (
-        <div className="total-cost">
-          <div className="cost-amount">${costs.toFixed(2)}</div>
-          <div className="cost-label">Total spent</div>
-        </div>
-      )}
 
+      <div className="totals">
+        <div className="total-item">
+          <div className="total-label">Total Spent</div>
+          <div className="total-value">${totalCost.toFixed(4)}</div>
+        </div>
+        <div className="total-item">
+          <div className="total-label">Total Tokens</div>
+          <div className="total-value">{totalTokens.toLocaleString()}</div>
+        </div>
+      </div>
+
+      <h3>By Model</h3>
       <div className="models-grid">
         {Object.entries(stats).map(([model, data]) => (
-          <div key={model} className="model-stat">
-            <div className="model-name">
+          <div key={model} className="model-card">
+            <div className="model-header">
               {model === 'claude' && '🧠 Claude'}
               {model === 'ollama' && '🦙 Ollama'}
               {model === 'mistral' && '🌪️ Mistral'}
               {model === 'groq' && '⚡ Groq'}
+              {!['claude', 'ollama', 'mistral', 'groq'].includes(model) && model}
             </div>
-            <div className="tokens">{data.tokens.toLocaleString()} tokens</div>
-            <div className="cost">${parseFloat(data.cost).toFixed(4)}</div>
+            <div className="model-stat">
+              <span className="label">Tokens:</span>
+              <span className="value">{data.tokens.toLocaleString()}</span>
+            </div>
+            <div className="model-stat">
+              <span className="label">Cost:</span>
+              <span className="value">${parseFloat(data.cost).toFixed(4)}</span>
+            </div>
           </div>
         ))}
       </div>
 
-      {detailed && (
-        <div className="savings-hint">
-          <p>💡 Switching simple tasks to free models could save ~60% on API costs</p>
-        </div>
-      )}
+      <div className="savings-tip">
+        <p>💡 <strong>Tip:</strong> Use Auto mode to automatically route tasks to cheaper models</p>
+      </div>
     </div>
   )
 }

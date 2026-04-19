@@ -24,7 +24,7 @@ function App() {
 
   return (
     <div className={`app ${theme}`}>
-      <Dashboard status={status} theme={theme} setTheme={setTheme} />
+      <Dashboard status={status} theme={theme} setTheme={setTheme} onRefresh={fetchStatus} />
     </div>
   )
 }

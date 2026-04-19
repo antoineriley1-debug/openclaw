@@ -9,25 +9,18 @@ export default function Header({ theme, setTheme, status }) {
         {status && (
           <div className="status-badge">
             <span className={`status-dot ${status.online ? 'online' : 'offline'}`}></span>
-            <span className="status-text">
-              {status.online ? 'Online' : 'Offline'}
-            </span>
-            {status.tasks > 0 && (
-              <span className="task-count">{status.tasks} task{status.tasks !== 1 ? 's' : ''}</span>
-            )}
+            <span>{status.online ? 'Online' : 'Offline'}</span>
           </div>
         )}
       </div>
-      
-      <div className="header-right">
-        <button 
-          className="theme-toggle"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          title="Toggle theme"
-        >
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
-      </div>
+
+      <button
+        className="theme-toggle"
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        title="Toggle theme"
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
     </header>
   )
 }
