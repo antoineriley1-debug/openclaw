@@ -1,5 +1,5 @@
 const express = require('express');
-const { Anthropic } = require('@anthropic-ai/sdk');
+const Anthropic = require('@anthropic-ai/sdk').default || require('@anthropic-ai/sdk');
 
 module.exports = (db) => {
   const router = express.Router();
