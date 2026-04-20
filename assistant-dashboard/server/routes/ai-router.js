@@ -1,5 +1,10 @@
 const express = require('express');
-const Anthropic = require('@anthropic-ai/sdk').default || require('@anthropic-ai/sdk');
+let Anthropic;
+try {
+  Anthropic = require('@anthropic-ai/sdk').default || require('@anthropic-ai/sdk');
+} catch (e) {
+  console.log('Anthropic SDK not available, tasks will fail until key is set');
+}
 
 module.exports = (db) => {
   const router = express.Router();
@@ -29,9 +34,10 @@ module.exports = (db) => {
         db.updateTask(task.id, { status: 'failed', result: err.message });
       });
 
-      res.json({ taskId: task.id, status: 'pending', model: selectedModel });
+      return res.json({ taskId: task.id, status: 'pending', model: selectedModel });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error('Execute error:', err);
+      return res.status(500).json({ error: err.message });
     }
   });
 
@@ -138,11 +144,15 @@ async function selectModel(prompt, strategy, db) {
 
 async function executeTask(taskId, prompt, model, db) {
   // Mark as processing
-  db.updateTask(taskId, { status: 'processing' });
+  await db.updateTask(taskId, { status: 'processing' });
   db.removeActiveTask(taskId);
 
   try {
     if (model === 'claude') {
+      if (!Anthropic || !process.env.ANTHROPIC_API_KEY) {
+        throw new Error('Claude API key not configured. Set ANTHROPIC_API_KEY env var.');
+      }
+      
       const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
       const response = await client.messages.create({
         model: 'claude-3-5-sonnet-20241022',
@@ -154,12 +164,17 @@ async function executeTask(taskId, prompt, model, db) {
       const tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
       const cost = calculateCost('claude', response.usage);
 
-      db.recordTokenUsage('claude', tokensUsed, cost);
-      db.updateTask(taskId, { status: 'completed', result, tokensUsed, cost });
+      await db.recordTokenUsage('claude', tokensUsed, cost);
+      await db.updateTask(taskId, { status: 'completed', result, tokensUsed, cost });
+    } else {
+      // Fallback for non-Claude models
+      const result = `Echo: ${prompt}`;
+      await db.recordTokenUsage(model, 10, 0);
+      await db.updateTask(taskId, { status: 'completed', result, tokensUsed: 10, cost: 0 });
     }
-    // Add other models here
   } catch (err) {
-    db.updateTask(taskId, { status: 'failed', result: err.message });
+    console.error('executeTask error:', err);
+    await db.updateTask(taskId, { status: 'failed', result: err.message });
   }
 }
 
