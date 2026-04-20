@@ -2,11 +2,9 @@ services:
   - type: web
     name: assistant-dashboard
     runtime: node
-    buildCommand: npm install
-    startCommand: npm start
+    buildCommand: npm ci
+    startCommand: node simple-server.js
     envVars:
-      - key: PORT
-        value: "3000"
       - key: NODE_ENV
         value: production
       - key: ANTHROPIC_API_KEY
@@ -15,5 +13,3 @@ services:
         sync: false
       - key: GROQ_API_KEY
         sync: false
-      - key: OLLAMA_URL
-        value: ""
