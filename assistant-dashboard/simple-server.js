@@ -56,17 +56,39 @@ const server = http.createServer((req, res) => {
         };
         tasks.push(task);
 
-        // Simulate task completion
-        setTimeout(() => {
-          const t = tasks.find(x => x.id === taskId);
-          if (t) {
-            t.status = 'completed';
-            t.result = `Echo: ${prompt}`;
-            t.tokensUsed = 10;
-            t.cost = 0;
-            t.completedAt = new Date().toISOString();
+        // Call Claude API
+        (async () => {
+          try {
+            const { Anthropic } = await import('@anthropic-ai/sdk');
+            const client = new Anthropic({
+              apiKey: process.env.ANTHROPIC_API_KEY
+            });
+
+            const message = await client.messages.create({
+              model: 'claude-3-5-sonnet-20241022',
+              max_tokens: 1024,
+              messages: [
+                { role: 'user', content: prompt }
+              ]
+            });
+
+            const t = tasks.find(x => x.id === taskId);
+            if (t) {
+              t.status = 'completed';
+              t.result = message.content[0].type === 'text' ? message.content[0].text : 'No response';
+              t.tokensUsed = message.usage.output_tokens + message.usage.input_tokens;
+              t.cost = (message.usage.input_tokens * 0.003 + message.usage.output_tokens * 0.015) / 1000;
+              t.completedAt = new Date().toISOString();
+            }
+          } catch (err) {
+            const t = tasks.find(x => x.id === taskId);
+            if (t) {
+              t.status = 'failed';
+              t.result = `Error: ${err.message}`;
+              t.completedAt = new Date().toISOString();
+            }
           }
-        }, 500);
+        })();
 
         res.writeHead(200);
         res.end(JSON.stringify({ taskId, status: 'pending', model: task.model }));
