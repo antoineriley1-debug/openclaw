@@ -158,7 +158,7 @@ const server = http.createServer((req, res) => {
     <div id="chat" class="tab-content active">
       <div class="card">
         <h2>💬 Chat with Your Bot</h2>
-        <textarea id="prompt" placeholder="Ask me anything..." rows="4"></textarea>
+        <textarea id="prompt" placeholder="Ask me anything... (Ctrl+Enter to submit)" rows="4" onkeydown="if (event.ctrlKey && event.key === 'Enter') execute('claude')"></textarea>
         <div>
           <button onclick="execute('auto')">🤖 Auto (Free)</button>
           <button onclick="execute('claude')">🧠 Claude</button>
