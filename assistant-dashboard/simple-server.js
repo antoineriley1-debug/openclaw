@@ -166,6 +166,7 @@ const server = http.createServer((req, res) => {
       <div class="controls">
         <button onclick="submit('auto')">⚡ AUTO</button>
         <button onclick="submit('claude')">🧠 CLAUDE</button>
+        <button onclick="optimizeTokens()">💰 OPTIMIZE</button>
         <button onclick="clear()">✕ CLEAR</button>
       </div>
     </div>
@@ -259,6 +260,46 @@ const server = http.createServer((req, res) => {
             }
           });
       }, 500);
+    }
+
+    function optimizeTokens() {
+      const prompt = document.getElementById('prompt').value.trim();
+      if (!prompt) return;
+      
+      const status = document.getElementById('status');
+      status.innerHTML = '<span class="thinking">OPTIMIZING</span>';
+      
+      // Send to Claude to optimize the prompt for token efficiency
+      fetch('/api/ai/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt: 'Rewrite this prompt to be more concise and token-efficient while keeping the same meaning: "' + prompt + '"',
+          model: 'claude'
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          status.innerHTML = '<span class="error">ERROR: ' + data.error + '</span>';
+          return;
+        }
+        // Poll and replace original with optimized version
+        const pollOptimize = setInterval(() => {
+          fetch('/api/ai/' + data.taskId)
+            .then(r => r.json())
+            .then(task => {
+              if (task.status === 'completed') {
+                clearInterval(pollOptimize);
+                document.getElementById('prompt').value = task.result;
+                status.innerHTML = '<span class="success">✓ OPTIMIZED</span>';
+              } else if (task.status === 'failed') {
+                clearInterval(pollOptimize);
+                status.innerHTML = '<span class="error">ERROR: ' + task.result + '</span>';
+              }
+            });
+        }, 500);
+      });
     }
 
     function clear() {
