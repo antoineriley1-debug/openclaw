@@ -17,16 +17,22 @@ const db = new Database();
 app.use(cors());
 app.use(express.json());
 
+// Debug logging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
+
 // Initialize database
 db.init();
 
-// API Routes
+// API Routes FIRST (before static files)
 app.use('/api/tasks', tasksRouter(db));
 app.use('/api/settings', settingsRouter(db));
 app.use('/api/ai', aiRouter(db));
 
 // Status endpoint
-app.get('/api/status', (req, res) => {
+app.get('/api/status', async (req, res) => {
   const status = {
     online: true,
     timestamp: new Date().toISOString(),

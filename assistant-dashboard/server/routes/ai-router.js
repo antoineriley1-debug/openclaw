@@ -9,8 +9,11 @@ try {
 module.exports = (db) => {
   const router = express.Router();
 
+  console.log('AI Router initialized');
+
   // Execute a task with automatic model selection
   router.post('/execute', async (req, res) => {
+    console.log('POST /api/ai/execute called');
     try {
       const { prompt, model = 'auto', forceModel = null } = req.body;
       
