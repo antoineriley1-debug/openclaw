@@ -4,12 +4,8 @@
   "description": "Desktop dashboard for managing Twiney's forked OpenClaw assistant",
   "main": "server/index.js",
   "scripts": {
-    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
-    "server:dev": "node --watch server/index.js",
-    "client:dev": "vite",
-    "build": "vite build 2>&1 || true",
-    "preview": "vite preview",
-    "start": "npm run build && node server/index.js"
+    "dev": "node simple-server.js",
+    "start": "node simple-server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
