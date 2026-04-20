@@ -1,6 +1,6 @@
 {
   "name": "assistant-dashboard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Desktop dashboard for managing Twiney's forked OpenClaw assistant",
   "main": "server/index.js",
   "scripts": {
