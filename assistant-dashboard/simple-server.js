@@ -92,8 +92,8 @@ const server = http.createServer((req, res) => {
     res.writeHead(200);
     res.end(JSON.stringify({ history: tasks }));
   } else if (pathname === '/') {
-    res.writeHead(200);
     res.setHeader('Content-Type', 'text/html');
+    res.writeHead(200);
     res.end(`
 <!DOCTYPE html>
 <html>
