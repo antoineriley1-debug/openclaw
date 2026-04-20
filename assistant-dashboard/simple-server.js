@@ -120,146 +120,109 @@ const server = http.createServer((req, res) => {
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Assistant Dashboard</title>
+  <title>⚡ Assistant</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 10px rgba(0, 114, 206, 0.3); } 50% { box-shadow: 0 0 20px rgba(0, 114, 206, 0.6); } }
+    @keyframes thinking { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+    @keyframes slide-in { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes cursor-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #f1f5f9; padding: 2rem; }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1 { color: #0072ce; margin-bottom: 1.5rem; }
-    .card { background: #1e293b; border: 1px solid #334155; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem; }
-    textarea { width: 100%; padding: 0.75rem; background: #0f172a; border: 1px solid #334155; color: #f1f5f9; border-radius: 0.25rem; font-family: inherit; resize: vertical; }
-    button { background: #0072ce; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.25rem; cursor: pointer; font-weight: 600; margin: 0.5rem 0.5rem 0 0; }
-    button:hover { background: #0056a8; }
-    .result { background: #0f172a; padding: 1rem; border-radius: 0.25rem; margin-top: 1rem; white-space: pre-wrap; word-wrap: break-word; }
-    .status { padding: 0.75rem; background: #fef3c7; color: #92400e; border-radius: 0.25rem; margin-top: 0.5rem; }
-    .error { background: #fee2e2; color: #991b1b; }
-    .success { background: #dcfce7; color: #166534; }
-    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid #334155; }
-    .tab { padding: 0.75rem 1rem; background: none; border: none; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; }
-    .tab.active { color: #0072ce; border-bottom-color: #0072ce; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-    th, td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #334155; }
-    th { font-weight: 600; }
+    body { font-family: 'Courier New', monospace; background: #0a0e27; color: #00ff88; overflow: hidden; }
+    .grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.02; background-image: linear-gradient(0deg, transparent 24%, rgba(0,255,136,.1) 25%, rgba(0,255,136,.1) 26%, transparent 27%, transparent 74%, rgba(0,255,136,.1) 75%, rgba(0,255,136,.1) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0,255,136,.1) 25%, rgba(0,255,136,.1) 26%, transparent 27%, transparent 74%, rgba(0,255,136,.1) 75%, rgba(0,255,136,.1) 76%, transparent 77%, transparent); background-size: 50px 50px; pointer-events: none; z-index: 0; }
+    .container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 2rem; }
+    .head { text-align: center; margin-bottom: 3rem; }
+    .title { font-size: 2.5rem; font-weight: bold; text-shadow: 0 0 10px #00ff88; margin-bottom: 0.5rem; }
+    .input-zone { width: 100%; max-width: 600px; margin-bottom: 2rem; }
+    textarea { width: 100%; padding: 1rem; background: rgba(0, 255, 136, 0.05); border: 2px solid #00ff88; color: #00ff88; font-family: 'Courier New', monospace; font-size: 1rem; resize: none; height: 120px; outline: none; transition: all 0.3s; box-shadow: 0 0 10px rgba(0,255,136,0.1); }
+    textarea:focus { box-shadow: 0 0 20px rgba(0,255,136,0.3); border-color: #00ffff; }
+    textarea::placeholder { color: #00ff88; opacity: 0.5; }
+    .controls { display: flex; gap: 1rem; margin-top: 1rem; }
+    button { padding: 0.75rem 1.5rem; background: rgba(0,255,136,0.1); border: 2px solid #00ff88; color: #00ff88; font-family: 'Courier New', monospace; cursor: pointer; transition: all 0.3s; font-weight: bold; }
+    button:hover { background: rgba(0,255,136,0.2); box-shadow: 0 0 15px rgba(0,255,136,0.4); }
+    button:active { transform: scale(0.95); }
+    .thinking { animation: thinking 1s infinite; color: #00ffff; }
+    .thinking::before { content: '▮'; margin-right: 0.5rem; }
+    .output { width: 100%; max-width: 600px; padding: 1.5rem; background: rgba(0, 255, 136, 0.05); border: 2px solid #00ff88; border-radius: 4px; min-height: 100px; max-height: 300px; overflow-y: auto; margin-top: 2rem; animation: slide-in 0.5s; line-height: 1.6; }
+    .output::-webkit-scrollbar { width: 8px; }
+    .output::-webkit-scrollbar-track { background: rgba(0,255,136,0.1); }
+    .output::-webkit-scrollbar-thumb { background: #00ff88; }
+    .status { margin-top: 1rem; font-size: 0.9rem; color: #00ffff; }
+    .error { color: #ff0055; }
+    .success { color: #00ff88; }
   </style>
 </head>
 <body>
+  <div class="grid"></div>
   <div class="container">
-    <h1>⚡ Assistant Dashboard</h1>
-
-    <div class="tabs">
-      <button class="tab active" onclick="showTab('chat')">💬 Chat</button>
-      <button class="tab" onclick="showTab('history')">📈 History</button>
+    <div class="head">
+      <div class="title">⚡ ASSISTANT</div>
+      <div style="color: #00ffff; font-size: 0.9rem;">thinking engine v1.0</div>
     </div>
-
-    <div id="chat" class="tab-content active">
-      <div class="card">
-        <h2>💬 Chat with Your Bot</h2>
-        <textarea id="prompt" placeholder="Ask me anything... (Ctrl+Enter to submit)" rows="4" onkeydown="if (event.ctrlKey && event.key === 'Enter') execute('claude')"></textarea>
-        <div>
-          <button onclick="execute('auto')">🤖 Auto (Free)</button>
-          <button onclick="execute('claude')">🧠 Claude</button>
-        </div>
-        <div id="status"></div>
-        <div id="result"></div>
+    
+    <div class="input-zone">
+      <textarea id="prompt" placeholder="> enter your query..." onkeydown="if (event.ctrlKey && event.key === 'Enter') submit()"></textarea>
+      <div class="controls">
+        <button onclick="submit()">⚡ SUBMIT</button>
+        <button onclick="clear()">✕ CLEAR</button>
       </div>
     </div>
 
-    <div id="history" class="tab-content">
-      <div class="card">
-        <h2>📈 Task History</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Status</th>
-              <th>Prompt</th>
-              <th>Model</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody id="historyTable"></tbody>
-        </table>
-      </div>
-    </div>
+    <div id="status" class="status"></div>
+    <div id="output" class="output" style="display:none;"></div>
   </div>
 
   <script>
-    function showTab(name) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-      document.getElementById(name).classList.add('active');
-      event.target.classList.add('active');
-      if (name === 'history') loadHistory();
-    }
-
-    function execute(model) {
-      const prompt = document.getElementById('prompt').value;
-      if (!prompt) return alert('Enter a prompt');
-
-      const statusEl = document.getElementById('status');
-      const resultEl = document.getElementById('result');
-      statusEl.innerHTML = '<div class="status">⏳ Executing...</div>';
-      resultEl.innerHTML = '';
-
+    function submit() {
+      const prompt = document.getElementById('prompt').value.trim();
+      if (!prompt) return;
+      
+      const output = document.getElementById('output');
+      const status = document.getElementById('status');
+      
+      output.style.display = 'none';
+      status.innerHTML = '<span class="thinking">PROCESSING</span>';
+      
       fetch('/api/ai/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model })
+        body: JSON.stringify({ prompt, model: 'claude' })
       })
       .then(r => r.json())
       .then(data => {
         if (data.error) {
-          statusEl.innerHTML = '<div class="status error">❌ ' + data.error + '</div>';
+          status.innerHTML = '<span class="error">ERROR: ' + data.error + '</span>';
           return;
         }
-        statusEl.innerHTML = '<div class="status">🔄 Model: ' + data.model + ' | Task: ' + data.taskId + '</div>';
-        pollTask(data.taskId);
+        poll(data.taskId);
       })
-      .catch(err => {
-        statusEl.innerHTML = '<div class="status error">❌ ' + err.message + '</div>';
-      });
+      .catch(err => status.innerHTML = '<span class="error">ERROR: ' + err.message + '</span>');
     }
 
-    function pollTask(taskId) {
-      const resultEl = document.getElementById('result');
-      const maxAttempts = 30;
-      let attempts = 0;
-
-      function poll() {
+    function poll(taskId) {
+      setTimeout(() => {
         fetch('/api/ai/' + taskId)
           .then(r => r.json())
           .then(task => {
             if (task.status === 'completed') {
-              resultEl.innerHTML = '<div class="result">' + task.result + '</div>';
-              document.getElementById('status').innerHTML = '<div class="status success">✅ Done</div>';
+              document.getElementById('output').innerHTML = task.result;
+              document.getElementById('output').style.display = 'block';
+              document.getElementById('status').innerHTML = '<span class="success">✓ DONE</span>';
             } else if (task.status === 'failed') {
-              resultEl.innerHTML = '<div class="result">Error: ' + task.result + '</div>';
-              document.getElementById('status').innerHTML = '<div class="status error">❌ Failed</div>';
-            } else if (++attempts < maxAttempts) {
-              setTimeout(poll, 500);
+              document.getElementById('status').innerHTML = '<span class="error">ERROR: ' + task.result + '</span>';
+            } else {
+              poll(taskId);
             }
           });
-      }
-      poll();
+      }, 500);
     }
 
-    function loadHistory() {
-      fetch('/api/history')
-        .then(r => r.json())
-        .then(data => {
-          const tbody = document.getElementById('historyTable');
-          tbody.innerHTML = '';
-          data.history.forEach(task => {
-            const row = tbody.insertRow();
-            row.innerHTML = '<td>' + (task.status === 'completed' ? '✅' : task.status === 'failed' ? '❌' : '⏳') + '</td>' +
-              '<td>' + task.prompt.substring(0, 50) + '</td>' +
-              '<td>' + task.model + '</td>' +
-              '<td>' + new Date(task.createdAt).toLocaleTimeString() + '</td>';
-          });
-        });
+    function clear() {
+      document.getElementById('prompt').value = '';
+      document.getElementById('output').style.display = 'none';
+      document.getElementById('status').innerHTML = '';
+      document.getElementById('prompt').focus();
     }
   </script>
 </body>
