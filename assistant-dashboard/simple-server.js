@@ -162,9 +162,10 @@ const server = http.createServer((req, res) => {
     </div>
     
     <div class="input-zone">
-      <textarea id="prompt" placeholder="> enter your query..." onkeydown="if (event.ctrlKey && event.key === 'Enter') submit()"></textarea>
+      <textarea id="prompt" placeholder="> enter your query..." onkeydown="if (event.ctrlKey && event.key === 'Enter') submit('auto')"></textarea>
       <div class="controls">
-        <button onclick="submit()">⚡ SUBMIT</button>
+        <button onclick="submit('auto')">⚡ AUTO</button>
+        <button onclick="submit('claude')">🧠 CLAUDE</button>
         <button onclick="clear()">✕ CLEAR</button>
       </div>
     </div>
@@ -174,20 +175,62 @@ const server = http.createServer((req, res) => {
   </div>
 
   <script>
-    function submit() {
+    function getComplexity(prompt) {
+      const length = prompt.length;
+      const codeKeywords = ['code', 'function', 'debug', 'error', 'algorithm', 'api', 'database', 'sql', 'python', 'javascript'];
+      const analysisKeywords = ['analyze', 'explain', 'research', 'compare', 'evaluate', 'summary', 'report', 'write'];
+      const simpleKeywords = ['hello', 'thanks', 'what', 'when', 'where', 'how', 'who'];
+      
+      let complexity = 0;
+      const lowerPrompt = prompt.toLowerCase();
+      
+      // Check for code/complex keywords
+      codeKeywords.forEach(k => {
+        if (lowerPrompt.includes(k)) complexity += 3;
+      });
+      
+      // Check for analysis keywords
+      analysisKeywords.forEach(k => {
+        if (lowerPrompt.includes(k)) complexity += 2;
+      });
+      
+      // Check for simple keywords
+      simpleKeywords.forEach(k => {
+        if (lowerPrompt.includes(k)) complexity -= 1;
+      });
+      
+      // Length factor
+      if (length > 200) complexity += 2;
+      if (length > 500) complexity += 2;
+      
+      return Math.max(0, complexity);
+    }
+
+    function selectModel(autoMode) {
+      if (!autoMode) return 'claude';
+      const prompt = document.getElementById('prompt').value;
+      const complexity = getComplexity(prompt);
+      // complexity < 3 = simple (use free/fast), >= 3 = complex (use Claude)
+      return complexity >= 3 ? 'claude' : 'ollama';
+    }
+
+    function submit(mode) {
       const prompt = document.getElementById('prompt').value.trim();
       if (!prompt) return;
       
       const output = document.getElementById('output');
       const status = document.getElementById('status');
       
+      const model = mode === 'auto' ? selectModel(true) : mode;
+      const modelName = model === 'claude' ? '🧠 CLAUDE' : '⚙️ FAST';
+      
       output.style.display = 'none';
-      status.innerHTML = '<span class="thinking">PROCESSING</span>';
+      status.innerHTML = '<span class="thinking">PROCESSING [' + modelName + ']</span>';
       
       fetch('/api/ai/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model: 'claude' })
+        body: JSON.stringify({ prompt, model })
       })
       .then(r => r.json())
       .then(data => {
